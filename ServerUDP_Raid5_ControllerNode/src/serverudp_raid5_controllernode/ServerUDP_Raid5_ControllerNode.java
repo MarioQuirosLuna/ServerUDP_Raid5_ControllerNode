@@ -1,11 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package serverudp_raid5_controllernode;
 
 import Server.Server;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -17,8 +13,11 @@ public class ServerUDP_Raid5_ControllerNode {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
-        Server server = new Server(5000);
+        /**
+         * Create server with port 5000
+         */
+        String numberDisk = JOptionPane.showInputDialog(null, "Enter the number of disks:");
+        Server server = new Server(5000, Integer.parseInt(numberDisk));
         server.start();
     }
     
