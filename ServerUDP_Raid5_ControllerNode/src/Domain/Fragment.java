@@ -9,10 +9,10 @@ public class Fragment {
     private int disk;
     private Data data;
 
-    public Fragment(int id, int disk, Data data) {
+    public Fragment(int id, int disk,String name, String data) {
         this.id = id;
         this.disk = disk;
-        this.data = data;
+        this.data = new Data(name, data);
     }
 
     public int getId() {

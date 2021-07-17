@@ -16,8 +16,7 @@ public class Data {
     private String name;
     private String content;
 
-    public Data(int id, String name, String content) {
-        this.id = id;
+    public Data(String name, String content) {
         this.name = name;
         this.content = content;
     }
