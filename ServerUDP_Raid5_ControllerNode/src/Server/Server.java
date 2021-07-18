@@ -73,7 +73,7 @@ public class Server extends Thread{
                     System.out.println("\n************\n"+message+"\n************\n");
                     
                     if(message.equals(Utility.MyUtility.STOCKFILE)){   
-                        receiveFile();
+                        receiveFile();                       
                     }
                     if(message.equals(Utility.MyUtility.GETFILENAMES)){
                         receiveGetNames(petition);                       
@@ -102,6 +102,7 @@ public class Server extends Thread{
      * Receive file from client
      */
     public void receiveFile(){
+        System.out.println("receiveFile");
         String nameFile = receive();
         int sizeFile = Integer.parseInt(receive());
         String content = receive(sizeFile);
@@ -142,6 +143,7 @@ public class Server extends Thread{
      * |************Data***********|
      * | position | name | content |
      * |***************************|
+     * @return 
      * 
      */
     public List<String> receiveGetFile(){
@@ -180,7 +182,7 @@ public class Server extends Thread{
             fullFile += element;
         }
         System.out.println(fullFile);
-//        send(petition, fullFile);
+        send(petition, fullFile);
     }
     
     /**
@@ -219,7 +221,7 @@ public class Server extends Thread{
      *  
      */
     public MetaData splitFile(String name, String file){
-        
+        System.out.println("splitFile");
         int sizeFragment = file.length() / (this.numberDisk - 1); // 557 / 2 = 778.5
         int residuo = file.length() % (this.numberDisk - 1);      // 557 % 2 = 1
         int j = 0; 
@@ -253,9 +255,13 @@ public class Server extends Thread{
      * 
      */
     public void saveSplitFile(MetaData metadata){
+        System.out.println("saveSplitFile");
         this.listMetadata.add(metadata);       
         
         for (int i = 0; i < this.listNodes.size(); i++) {
+            System.out.println("Nodo: "+metadata.getFragments().get(i).getDisk());
+            System.out.println("Name: "+metadata.getFragments().get(i).getData().getName());
+            System.out.println("Content: "+metadata.getFragments().get(i).getData().getContent());
             this.listNodes.get(metadata.getFragments().get(i).getDisk()).modeWrite(
                     metadata.getFragments().get(i).getData().getName(),
                     metadata.getFragments().get(i).getData().getContent()

@@ -24,6 +24,9 @@ public class Node extends Thread{
     
     private String name="";
     private String content="";
+    
+    private static final String INPUT = "input";
+    private static final String OUTPUT = "output";
 
     public Node(int id) {
         this.id = id;
@@ -39,28 +42,29 @@ public class Node extends Thread{
     @Override
     public void run() {
         while(this.state){
-            
             try {
                 if(this.writeData){
                     System.out.println("Saving in node: "+this.id);
                     save(this.name, this.content);
-                    System.out.println("Saved by node: "+this.id);                  
+                    System.out.println("Saved by node: "+this.id);
+                    this.writeData = false;
                 }
                 if(this.readData){
                     System.out.println("Getting from node: "+this.id);
                     this.content = read(this.name);
                     System.out.println("Obtained by node: "+this.id);
+                    this.readData = false;
                 }
                 
                 Node.sleep(100);
-                reset();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
     
-    public void modeWrite(String name, String content){       
+    public void modeWrite(String name, String content){
+        System.out.println("modeWrite node: "+this.id);
         this.name = name;
         this.content = content;
         this.writeData = true;
@@ -90,7 +94,7 @@ public class Node extends Thread{
                 contents += line; 
             }
             System.out.println(contents);
-            
+            ready();
         } catch (FileNotFoundException e) {
             System.out.println("Node.read() "+e.getMessage());
         }
@@ -116,14 +120,8 @@ public class Node extends Thread{
     }
     
     private void ready(){
+        System.out.println("ready");
         this.ready = true;
-    }
-    
-    private void reset(){
-        this.name = "";
-        this.content = "";
-        this.writeData = false;
-        this.readData = false;
     }
 
     public String getContent() {
