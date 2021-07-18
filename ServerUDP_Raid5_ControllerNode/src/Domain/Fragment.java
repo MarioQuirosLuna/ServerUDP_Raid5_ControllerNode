@@ -15,10 +15,10 @@ public class Fragment {
     private int disk;
     private Data data;
 
-    public Fragment(int position, int disk, String name, String data) {
+    public Fragment(int position, int disk, String name, String data, boolean parity) {
         this.position = position;
         this.disk = disk;
-        this.data = new Data(position, name, data);
+        this.data = new Data(position, name, data, parity);
     }
 
     public int getId() {

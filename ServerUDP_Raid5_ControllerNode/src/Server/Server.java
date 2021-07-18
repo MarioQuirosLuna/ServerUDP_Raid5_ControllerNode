@@ -87,7 +87,7 @@ public class Server extends Thread{
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 
-                Server.sleep(1);
+                Server.sleep(500);
             }
         } catch (SocketException | InterruptedException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
@@ -102,12 +102,14 @@ public class Server extends Thread{
      * Receive file from client
      */
     public void receiveFile(){
-        System.out.println("receiveFile");
+
         String nameFile = receive();
         int sizeFile = Integer.parseInt(receive());
         String content = receive(sizeFile);
         
-        saveSplitFile(splitFile(nameFile, content));
+        if(searchMetaData(nameFile)==null){
+            saveSplitFile(splitFile(nameFile, content));
+        }
     }
     
     /**
@@ -126,7 +128,6 @@ public class Server extends Thread{
     }
     
     /**
-     * @param petition : Client request with which you will be answered
      * 
      * Get the file name
      * 
@@ -147,36 +148,37 @@ public class Server extends Thread{
      * 
      */
     public List<String> receiveGetFile(){
-        System.out.println("receiveGetFile");
-        
+        System.out.println("\nreceiveGetFile\n");
         String nameFile = receive();
         
         MetaData metadata = searchMetaData(nameFile);
-        System.out.println(metadata.toString());
-        System.out.println(metadata.getFragments().get(0).getDisk());
-        int p=-1;
-        String s="";
         
         for (int i = 0; i < this.listNodes.size(); i++) {
+            System.out.println("\nFor1: "+i);
             this.listNodes.get(metadata.getFragments().get(i).getDisk()).modeRead(nameFile);
         }
         
         List<String> fragmentsFile = new ArrayList<>();
         
         for (int i = 0; i < metadata.getFragments().size(); i++) {
-            while(!this.listNodes.get(metadata.getFragments().get(i).getDisk()).isReady()){
-                System.out.println("no ready node:"+this.listNodes.get(metadata.getFragments().get(i).getDisk()).getIdentification());
-            } //while == false
-            p = metadata.getFragments().get(i).getDisk(); 
-            s = this.listNodes.get(p).getContent();
-            System.out.println("fragment: "+s);
-            fragmentsFile.add(s);
+            System.out.println("\nFor2: "+i);
+            while(!this.listNodes.get(metadata.getFragments().get(i).getDisk()).isReady()){System.out.print("");} //while == false
+            if(!metadata.getFragments().get(i).getData().isParity()){
+                fragmentsFile.add(this.listNodes.get(metadata.getFragments().get(i).getDisk()).getContent());
+            }else{
+                this.listNodes.get(metadata.getFragments().get(i).getDisk()).setReady(false);
+            }
         }
 
         return fragmentsFile;
     }
     
+    /**
+     * @param petition : Client request with which you will be answered
+     * @param fragmentsFile 
+     */
     public void joinFile(DatagramPacket petition, List<String> fragmentsFile){
+        System.out.println("\njoinFile\n");
         String fullFile = "";
         for (String element : fragmentsFile) {
             fullFile += element;
@@ -221,7 +223,7 @@ public class Server extends Thread{
      *  
      */
     public MetaData splitFile(String name, String file){
-        System.out.println("splitFile");
+
         int sizeFragment = file.length() / (this.numberDisk - 1); // 557 / 2 = 778.5
         int residuo = file.length() % (this.numberDisk - 1);      // 557 % 2 = 1
         int j = 0; 
@@ -238,10 +240,10 @@ public class Server extends Thread{
                 fragmentBook = file.substring(j, j + sizeFragment);
             }
             j += sizeFragment;
-            metadata.getFragments().add(new Fragment(i, array[i], name, fragmentBook));
+            metadata.getFragments().add(new Fragment(i, array[i], name, fragmentBook, false));
         }          
          
-        metadata.getFragments().add(new Fragment(this.numberDisk-1, array[this.numberDisk-1], name, file));
+        metadata.getFragments().add(new Fragment(this.numberDisk-1, array[this.numberDisk-1], name, file, true));
              
         System.out.println(metadata.toString());
         

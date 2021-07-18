@@ -56,7 +56,7 @@ public class Node extends Thread{
                     this.readData = false;
                 }
                 
-                Node.sleep(100);
+                Node.sleep(1);
             } catch (InterruptedException ex) {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -125,12 +125,17 @@ public class Node extends Thread{
     }
 
     public String getContent() {
+        System.out.println("\ngetContent"+this.id);
         this.ready = false;
         return content;
     }
 
     public boolean isReady() {
         return ready;
+    }
+
+    public void setReady(boolean ready) {
+        this.ready = ready;
     }
 
     public int getIdentification() {
