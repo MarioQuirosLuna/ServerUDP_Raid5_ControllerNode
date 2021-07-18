@@ -34,9 +34,9 @@ public class Server extends Thread{
     private byte[] buffer;
     private DatagramSocket socketUDP;
     private String message;
-    private List<MetaData> listMetadata;
-    private List<Node> listNodes;
-    private int numberDisk;
+    private final List<MetaData> listMetadata;
+    private final List<Node> listNodes;
+    private final int numberDisk;
  
     /**
      * Constructor of Server
@@ -45,11 +45,9 @@ public class Server extends Thread{
      */
     public Server(int port,int numberDisk){
        PORT = port;
-       this.listMetadata = new ArrayList<MetaData>();
-       this.listNodes = new ArrayList<Node>();
-       System.out.println("Start server UDP");
-       createRaid5Folder();
-       createNodes(numberDisk);
+       this.listMetadata = new ArrayList<>();
+       this.listNodes = new ArrayList<>();   
+       this.numberDisk = numberDisk;
     }
    
     /**
@@ -59,11 +57,14 @@ public class Server extends Thread{
     public void run(){
         try {                   
             socketUDP = new DatagramSocket(PORT);
+            System.out.println("Start server UDP");
+            createRaid5Folder();
+            createNodes(this.numberDisk);
             
             while (true) {                          
                                
                 try {
-                    buffer = new byte[1024];
+                    buffer = new byte[256];
                     System.out.println("Server waiting...");
                     DatagramPacket petition = new DatagramPacket(buffer, buffer.length);
                     socketUDP.receive(petition);
@@ -75,30 +76,28 @@ public class Server extends Thread{
                         receiveFile();
                     }
                     if(message.equals(Utility.MyUtility.GETFILENAMES)){
-                        receiveGetNames(petition);
+                        receiveGetNames(petition);                       
                     }
                     
                     if(message.equals(Utility.MyUtility.GETFILE)){
-                        receiveGetFile(petition);
+                        joinFile(petition, receiveGetFile());
                     }
                     
                 } catch (IOException ex) {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 
-                this.sleep(1);
+                Server.sleep(1);
             }
-        } catch (SocketException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InterruptedException ex) {
+        } catch (SocketException | InterruptedException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
     /**
-     * @param name : Name of file
-     * @param size : Size of file
-     * @param content : Content of file
+     * name : Name of the file received from the client
+     * size : Size of the file received from the client
+     * content : Content of the file received from the client
      * 
      * Receive file from client
      */
@@ -107,7 +106,7 @@ public class Server extends Thread{
         int sizeFile = Integer.parseInt(receive());
         String content = receive(sizeFile);
         
-        saveSplitFile(splitFile(nameFile, sizeFile, content));
+        saveSplitFile(splitFile(nameFile, content));
     }
     
     /**
@@ -136,22 +135,52 @@ public class Server extends Thread{
      * | id | name | fragments |
      * |***********************|
      * 
-     * |********Fragment*********|
-     * | id | disk | name | data |
-     * |*************************|
+     * |***********Fragment************|
+     * | position | disk | name | data |
+     * |*******************************|
      * 
-     * |*********Data********|
-     * | id | name | content |
-     * |*********************|
+     * |************Data***********|
+     * | position | name | content |
+     * |***************************|
      * 
      */
-    public void receiveGetFile(DatagramPacket petition){
+    public List<String> receiveGetFile(){
+        System.out.println("receiveGetFile");
+        
         String nameFile = receive();
         
         MetaData metadata = searchMetaData(nameFile);
+        System.out.println(metadata.toString());
+        System.out.println(metadata.getFragments().get(0).getDisk());
+        int p=-1;
+        String s="";
         
+        for (int i = 0; i < this.listNodes.size(); i++) {
+            this.listNodes.get(metadata.getFragments().get(i).getDisk()).modeRead(nameFile);
+        }
         
+        List<String> fragmentsFile = new ArrayList<>();
         
+        for (int i = 0; i < metadata.getFragments().size(); i++) {
+            while(!this.listNodes.get(metadata.getFragments().get(i).getDisk()).isReady()){
+                System.out.println("no ready node:"+this.listNodes.get(metadata.getFragments().get(i).getDisk()).getIdentification());
+            } //while == false
+            p = metadata.getFragments().get(i).getDisk(); 
+            s = this.listNodes.get(p).getContent();
+            System.out.println("fragment: "+s);
+            fragmentsFile.add(s);
+        }
+
+        return fragmentsFile;
+    }
+    
+    public void joinFile(DatagramPacket petition, List<String> fragmentsFile){
+        String fullFile = "";
+        for (String element : fragmentsFile) {
+            fullFile += element;
+        }
+        System.out.println(fullFile);
+//        send(petition, fullFile);
     }
     
     /**
@@ -163,7 +192,8 @@ public class Server extends Thread{
     private MetaData searchMetaData(String name){
         
         for (int i = 0; i < this.listMetadata.size(); i++) {
-            if(this.listMetadata.get(i).getName() == name){
+            if(this.listMetadata.get(i).getName().equals(name)){
+                System.out.println("searchMetaData: "+i);
                 return this.listMetadata.get(i);
             }
         }
@@ -173,7 +203,6 @@ public class Server extends Thread{
     
     /**
      * @param name : Name of file
-     * @param sizeFile : Size of File
      * @param file : Content of file
      * @return MetaData : Data of book
      * 
@@ -189,14 +218,14 @@ public class Server extends Thread{
      * 
      *  
      */
-    public MetaData splitFile(String name, int sizeFile, String file){
+    public MetaData splitFile(String name, String file){
         
-        int sizeFragment = sizeFile / (this.numberDisk - 1); // 26 / 4 = 6.5
-        int residuo = sizeFile % (this.numberDisk - 1);      // 26 % 4 = 2
+        int sizeFragment = file.length() / (this.numberDisk - 1); // 557 / 2 = 778.5
+        int residuo = file.length() % (this.numberDisk - 1);      // 557 % 2 = 1
         int j = 0; 
         
         MetaData metadata = new MetaData(this.listMetadata.size(), name);
-        String fragmentBook="";
+        String fragmentBook;
         
         int[] array = shuffleArray();
         
@@ -210,7 +239,7 @@ public class Server extends Thread{
             metadata.getFragments().add(new Fragment(i, array[i], name, fragmentBook));
         }          
          
-        metadata.getFragments().add(new Fragment(this.numberDisk, array[this.numberDisk-1], name, file));
+        metadata.getFragments().add(new Fragment(this.numberDisk-1, array[this.numberDisk-1], name, file));
              
         System.out.println(metadata.toString());
         
@@ -329,8 +358,10 @@ public class Server extends Thread{
     }
     
     /**
-     * Method that listen to the clients, but with a dynamic size buffer
+     * @param size : File size
      * @return String with client data book
+     * 
+     * Method that listen to the clients, but with a dynamic size buffer
      */
     public String receive(int size){
         buffer = new byte[size];
@@ -373,9 +404,8 @@ public class Server extends Thread{
      * Create and add nodes to list
      * Initialize the nodes(Disk)
      */
-    public void createNodes(int numberDisk){
-        this.numberDisk = numberDisk;
-        
+    public void createNodes(int numberDisk){       
+      
         for (int i = 0; i < this.numberDisk; i++) {
             this.listNodes.add(new Node(i));
             this.listNodes.get(i).start();

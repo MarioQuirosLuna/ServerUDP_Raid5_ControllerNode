@@ -2,7 +2,6 @@ package Domain;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -23,7 +22,7 @@ public class MetaData {
     public MetaData(int id, String name) {
         this.id = id;
         this.name = name;
-        this.fragments = new ArrayList<Fragment>();
+        this.fragments = new ArrayList<>();
     }
 
     public int getId() {
