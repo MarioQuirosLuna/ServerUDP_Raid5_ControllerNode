@@ -3,7 +3,6 @@ package Server;
 import Domain.Fragment;
 import Domain.MetaData;
 import Domain.Node;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -65,17 +64,24 @@ public class Server extends Thread{
                                
                 try {
                     buffer = new byte[1024];
-                    System.out.println("Waiting...");
+                    System.out.println("Server waiting...");
                     DatagramPacket petition = new DatagramPacket(buffer, buffer.length);
                     socketUDP.receive(petition);
 
                     message = new String(petition.getData(),0,petition.getLength());
-                    System.out.println("\n************\n"+message+"\n************n");
-                    if(message.equals("stockfile")){   
+                    System.out.println("\n************\n"+message+"\n************\n");
+                    
+                    if(message.equals(Utility.MyUtility.STOCKFILE)){   
                         receiveFile();
                     }
+                    if(message.equals(Utility.MyUtility.GETFILENAMES)){
+                        receiveGetNames(petition);
+                    }
                     
-
+                    if(message.equals(Utility.MyUtility.GETFILE)){
+                        receiveGetFile(petition);
+                    }
+                    
                 } catch (IOException ex) {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -102,6 +108,67 @@ public class Server extends Thread{
         String content = receive(sizeFile);
         
         saveSplitFile(splitFile(nameFile, sizeFile, content));
+    }
+    
+    /**
+     * @param petition : Client request with which you will be answered
+     * 
+     * Receive request to obtain the names
+     * Submit the number of names
+     * Submit the names
+     */
+    public void receiveGetNames(DatagramPacket petition){
+        send(petition, String.valueOf(this.listMetadata.size()));
+        for (int i = 0; i < this.listMetadata.size(); i++) {
+            send(petition, this.listMetadata.get(i).getName());
+        }
+        System.out.println("Submitted names");
+    }
+    
+    /**
+     * @param petition : Client request with which you will be answered
+     * 
+     * Get the file name
+     * 
+     * Look for the MetaData that corresponds to the file with that name
+     * 
+     * |*******Metadata********|
+     * | id | name | fragments |
+     * |***********************|
+     * 
+     * |********Fragment*********|
+     * | id | disk | name | data |
+     * |*************************|
+     * 
+     * |*********Data********|
+     * | id | name | content |
+     * |*********************|
+     * 
+     */
+    public void receiveGetFile(DatagramPacket petition){
+        String nameFile = receive();
+        
+        MetaData metadata = searchMetaData(nameFile);
+        
+        
+        
+    }
+    
+    /**
+     * @param name : File name
+     * @return Metadata : Metadata with the data of the searched file
+     * 
+     * Look for the file MetaData with the requested name
+     */
+    private MetaData searchMetaData(String name){
+        
+        for (int i = 0; i < this.listMetadata.size(); i++) {
+            if(this.listMetadata.get(i).getName() == name){
+                return this.listMetadata.get(i);
+            }
+        }
+        
+        return null;
     }
     
     /**
@@ -144,6 +211,8 @@ public class Server extends Thread{
         }          
          
         metadata.getFragments().add(new Fragment(this.numberDisk, array[this.numberDisk-1], name, file));
+             
+        System.out.println(metadata.toString());
         
         return metadata;
     }
@@ -283,7 +352,7 @@ public class Server extends Thread{
      * @param send : Message for send
      */
     public void send(DatagramPacket petition, String send){
-        buffer = new byte[1024];
+        buffer = new byte[send.length()];
         try {
             int portClient = petition.getPort();
             InetAddress address = petition.getAddress();

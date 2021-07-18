@@ -5,22 +5,28 @@ package Domain;
  * @author mario
  */
 public class Fragment {
-    private int id;
+    
+    /**
+     * position : Position of the book fragment
+     * disk : Disk identifier
+     * data : Book fragment data
+     */
+    private int position;
     private int disk;
     private Data data;
 
-    public Fragment(int id, int disk,String name, String data) {
-        this.id = id;
+    public Fragment(int position, int disk, String name, String data) {
+        this.position = position;
         this.disk = disk;
-        this.data = new Data(name, data);
+        this.data = new Data(position, name, data);
     }
 
     public int getId() {
-        return id;
+        return position;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setId(int position) {
+        this.position = position;
     }
 
     public int getDisk() {
@@ -37,6 +43,11 @@ public class Fragment {
 
     public void setData(Data data) {
         this.data = data;
+    }
+
+    @Override
+    public String toString() {
+        return "Fragment{" + "position=" + position + ", disk=" + disk + ", data=" + data + '}';
     }
     
     

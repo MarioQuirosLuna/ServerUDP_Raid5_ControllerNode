@@ -35,9 +35,9 @@ public class Node extends Thread{
             
             try {
                 if(saveData){
-                    System.out.println("Saving... "+this.id);
+                    System.out.println("Saving in node: "+this.id);
                     save(this.name, this.content);
-                    System.out.println("Saved "+this.id);                  
+                    System.out.println("Saved by node: "+this.id);                  
                 }
                 
                 this.sleep(100);
@@ -51,7 +51,6 @@ public class Node extends Thread{
         this.name = name;
         this.content = content;
         this.saveData = true;
-        System.out.println("save: "+name+": "+content);
     }
     
     public void save(String name, String content){

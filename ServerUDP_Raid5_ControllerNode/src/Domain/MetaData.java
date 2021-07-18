@@ -49,6 +49,11 @@ public class MetaData {
     public void setFragments(List<Fragment> fragments) {
         this.fragments = fragments;
     }
+
+    @Override
+    public String toString() {
+        return "MetaData{" + "id=" + id + ", name=" + name + ", fragments=" + fragments + '}';
+    }
     
     
     
