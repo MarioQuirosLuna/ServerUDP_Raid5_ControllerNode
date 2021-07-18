@@ -78,7 +78,9 @@ public class Server extends Thread{
                     if(message.equals(Utility.MyUtility.GETFILENAMES)){
                         receiveGetNames(petition);                       
                     }
-                    
+                    if(message.equals(Utility.MyUtility.GETFILENAME)){
+                        receiveSearchName(petition);
+                    }
                     if(message.equals(Utility.MyUtility.GETFILE)){
                         joinFile(petition, receiveGetFile());
                     }
@@ -127,6 +129,20 @@ public class Server extends Thread{
         //System.out.println("Submitted names");
     }
     
+    public void receiveSearchName(DatagramPacket petition){
+        String name = receive();
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < this.listMetadata.size(); i++) {
+            if(this.listMetadata.get(i).getName().contains(name)){
+                names.add(this.listMetadata.get(i).getName());
+            }
+        }
+        send(petition,String.valueOf(names.size()));
+        for (String element : names) {
+            send(petition, element);
+            System.out.println("send: "+element);
+        }
+    }
     /**
      * 
      * Get the file name
@@ -245,7 +261,7 @@ public class Server extends Thread{
          
         metadata.getFragments().add(new Fragment(this.numberDisk-1, array[this.numberDisk-1], name, file, true));
              
-        System.out.println(metadata.toString());
+        //System.out.println(metadata.toString());
         
         return metadata;
     }

@@ -25,9 +25,6 @@ public class Node extends Thread{
     private String name="";
     private String content="";
     
-    private static final String INPUT = "input";
-    private static final String OUTPUT = "output";
-
     public Node(int id) {
         this.id = id;
         this.path = "Raid5\\Disk_"+id;
@@ -44,15 +41,15 @@ public class Node extends Thread{
         while(this.state){
             try {
                 if(this.writeData){
-                    System.out.println("Saving in node: "+this.id);
+                    //System.out.println("Saving in node: "+this.id);
                     save(this.name, this.content);
-                    System.out.println("Saved by node: "+this.id);
+                    //System.out.println("Saved by node: "+this.id);
                     this.writeData = false;
                 }
                 if(this.readData){
-                    System.out.println("Getting from node: "+this.id);
+                    //System.out.println("Getting from node: "+this.id);
                     this.content = read(this.name);
-                    System.out.println("Obtained by node: "+this.id);
+                    //System.out.println("Obtained by node: "+this.id);
                     this.readData = false;
                 }
                 
@@ -64,14 +61,14 @@ public class Node extends Thread{
     }
     
     public void modeWrite(String name, String content){
-        System.out.println("modeWrite node: "+this.id);
+        //System.out.println("modeWrite node: "+this.id);
         this.name = name;
         this.content = content;
         this.writeData = true;
     }
     
     public void modeRead(String name){  
-        System.out.println("modeRead node: "+this.id);
+        //System.out.println("modeRead node: "+this.id);
         this.name = name;
         this.readData = true;
     }
@@ -93,7 +90,7 @@ public class Node extends Thread{
                 */
                 contents += line; 
             }
-            System.out.println(contents);
+            //System.out.println(contents);
             ready();
         } catch (FileNotFoundException e) {
             System.out.println("Node.read() "+e.getMessage());
@@ -120,12 +117,12 @@ public class Node extends Thread{
     }
     
     private void ready(){
-        System.out.println("ready");
+        //System.out.println("ready");
         this.ready = true;
     }
 
     public String getContent() {
-        System.out.println("\ngetContent"+this.id);
+        //System.out.println("\ngetContent"+this.id);
         this.ready = false;
         return content;
     }
