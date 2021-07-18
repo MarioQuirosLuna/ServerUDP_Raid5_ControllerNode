@@ -56,7 +56,7 @@ public class Node extends Thread{
                     this.readData = false;
                 }
                 
-                Node.sleep(1);
+                Node.sleep(100);
             } catch (InterruptedException ex) {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }

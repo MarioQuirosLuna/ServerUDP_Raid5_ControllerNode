@@ -124,7 +124,7 @@ public class Server extends Thread{
         for (int i = 0; i < this.listMetadata.size(); i++) {
             send(petition, this.listMetadata.get(i).getName());
         }
-        System.out.println("Submitted names");
+        //System.out.println("Submitted names");
     }
     
     /**
@@ -148,20 +148,20 @@ public class Server extends Thread{
      * 
      */
     public List<String> receiveGetFile(){
-        System.out.println("\nreceiveGetFile\n");
+        //System.out.println("\nreceiveGetFile\n");
         String nameFile = receive();
         
         MetaData metadata = searchMetaData(nameFile);
         
         for (int i = 0; i < this.listNodes.size(); i++) {
-            System.out.println("\nFor1: "+i);
+            //System.out.println("\nFor1: "+i);
             this.listNodes.get(metadata.getFragments().get(i).getDisk()).modeRead(nameFile);
         }
         
         List<String> fragmentsFile = new ArrayList<>();
         
         for (int i = 0; i < metadata.getFragments().size(); i++) {
-            System.out.println("\nFor2: "+i);
+            //System.out.println("\nFor2: "+i);
             while(!this.listNodes.get(metadata.getFragments().get(i).getDisk()).isReady()){System.out.print("");} //while == false
             if(!metadata.getFragments().get(i).getData().isParity()){
                 fragmentsFile.add(this.listNodes.get(metadata.getFragments().get(i).getDisk()).getContent());
@@ -178,7 +178,7 @@ public class Server extends Thread{
      * @param fragmentsFile 
      */
     public void joinFile(DatagramPacket petition, List<String> fragmentsFile){
-        System.out.println("\njoinFile\n");
+        //System.out.println("\njoinFile\n");
         String fullFile = "";
         for (String element : fragmentsFile) {
             fullFile += element;
@@ -197,7 +197,7 @@ public class Server extends Thread{
         
         for (int i = 0; i < this.listMetadata.size(); i++) {
             if(this.listMetadata.get(i).getName().equals(name)){
-                System.out.println("searchMetaData: "+i);
+                //System.out.println("searchMetaData: "+i);
                 return this.listMetadata.get(i);
             }
         }
@@ -257,13 +257,13 @@ public class Server extends Thread{
      * 
      */
     public void saveSplitFile(MetaData metadata){
-        System.out.println("saveSplitFile");
+        //System.out.println("saveSplitFile");
         this.listMetadata.add(metadata);       
         
         for (int i = 0; i < this.listNodes.size(); i++) {
-            System.out.println("Nodo: "+metadata.getFragments().get(i).getDisk());
-            System.out.println("Name: "+metadata.getFragments().get(i).getData().getName());
-            System.out.println("Content: "+metadata.getFragments().get(i).getData().getContent());
+            //System.out.println("Nodo: "+metadata.getFragments().get(i).getDisk());
+            //System.out.println("Name: "+metadata.getFragments().get(i).getData().getName());
+            //System.out.println("Content: "+metadata.getFragments().get(i).getData().getContent());
             this.listNodes.get(metadata.getFragments().get(i).getDisk()).modeWrite(
                     metadata.getFragments().get(i).getData().getName(),
                     metadata.getFragments().get(i).getData().getContent()
