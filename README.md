@@ -31,3 +31,7 @@ Open the projects in the IDE.
 
 Class diagram:
 ![Class diagram](https://user-images.githubusercontent.com/37676736/126219807-ea614f4b-9bda-41d2-b9f1-17abaa88b28b.png)
+
+Component diagram
+![Component diagram Server](https://user-images.githubusercontent.com/37676736/126220702-78d262c2-c6f0-48f0-807e-b305726233ea.png)
+
