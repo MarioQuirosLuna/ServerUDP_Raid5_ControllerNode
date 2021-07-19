@@ -37,6 +37,7 @@ public class Server extends Thread{
     private final List<MetaData> listMetadata;
     private final List<Node> listNodes;
     private final int numberDisk;
+    private int numberDamagedDiscs;
  
     /**
      * Constructor of Server
@@ -48,6 +49,7 @@ public class Server extends Thread{
        this.listMetadata = new ArrayList<>();
        this.listNodes = new ArrayList<>();   
        this.numberDisk = numberDisk;
+       this.numberDamagedDiscs = 0;
     }
    
     /**
@@ -149,18 +151,25 @@ public class Server extends Thread{
      * 
      * Look for the MetaData that corresponds to the file with that name
      * 
-     * |*******Metadata********|
-     * | id | name | fragments |
-     * |***********************|
+     * |*******Metadata********|  |***********Fragment************|  |************Data***********|
+     * | id | name | fragments |  | position | disk | name | data |  | position | name | content |
+     * |***********************|  |*******************************|  |***************************|
      * 
-     * |***********Fragment************|
-     * | position | disk | name | data |
-     * |*******************************|
+     *  ** A damaged disk **
      * 
-     * |************Data***********|
-     * | position | name | content |
-     * |***************************|
-     * @return 
+     * |*Disk_0*|*Disk_1*|*Disk_2*|**Disk_3**|
+     * |********|********|********|**********|
+     * | abcdef | XXXXXX | mnopqr | stuvwxyz |
+     * |********|********|********|**********|
+     * 
+     *  ** Damaged book **
+     * 
+     * |************ Book ************|
+     * |* abcdefXXXXXXmnopqrstuvwxyz *|
+     * |******************************|
+     * 
+     * 
+     * @return Fragments file
      * 
      */
     public List<String> receiveGetFile(){
@@ -168,10 +177,13 @@ public class Server extends Thread{
         String nameFile = receive();
         
         MetaData metadata = searchMetaData(nameFile);
-        
+        this.numberDamagedDiscs = 0;
         for (int i = 0; i < this.listNodes.size(); i++) {
             //System.out.println("\nFor1: "+i);
             this.listNodes.get(metadata.getFragments().get(i).getDisk()).modeRead(nameFile);
+            if(this.listNodes.get(metadata.getFragments().get(i).getDisk()).isDamaged()){
+                this.numberDamagedDiscs++;
+            }          
         }
         
         List<String> fragmentsFile = new ArrayList<>();
@@ -181,8 +193,8 @@ public class Server extends Thread{
             while(!this.listNodes.get(metadata.getFragments().get(i).getDisk()).isReady()){System.out.print("");} //while notReady
             if(!metadata.getFragments().get(i).getData().isParity()){
                 String content = this.listNodes.get(metadata.getFragments().get(i).getDisk()).getContent();
-                if(content.equals("FileNotFound")){
-                    fragmentsFile.add("XXXXXXX");
+                if(content.equals("ErrorFileNotFoundError")){                   
+                    return fragmentsFile = fragmentReconstructionRaid5(metadata);
                 }else{
                     fragmentsFile.add(content);
                 }
@@ -193,16 +205,62 @@ public class Server extends Thread{
 
         return fragmentsFile;
     }
+    /**
+     * @param metadata : File Metadata
+     * @return Rebuild file
+     * 
+     *  ** Parity simulation is used **
+     * 
+     * |*********Disk_4**Patity**(byte)******|
+     * |********|********|********|**********|
+     * | abcdef | ghijkl | mnopqr | stuvwxyz |
+     * |*************************************|
+     * 
+     *  ** Rebuild the book **
+     * 
+     * |************ Book ************|
+     * |* abcdefghijklmnopqrstuvwxyz *|
+     * |******************************|
+     */
+    public List<String> fragmentReconstructionRaid5(MetaData metadata){
+        List<String> fragmentsFile = new ArrayList<>();
+        for (int i = 0; i < metadata.getFragments().size(); i++) {
+            if(metadata.getFragments().get(i).getData().isParity()){
+                fragmentsFile.add(this.listNodes.get(metadata.getFragments().get(i).getDisk()).getContent());
+                return fragmentsFile;
+            }
+        }        
+        return null;
+    }
     
     /**
      * @param petition : Client request with which you will be answered
      * @param fragmentsFile 
+     * 
+     *  **GetBook**
+     * 
+     *  All discs without problem
+     * 
+     * |*Disk_0*|*Disk_1*|*Disk_2*|**Disk_3**|
+     * |********|********|********|**********|
+     * | abcdef | ghijkl | mnopqr | stuvwxyz |
+     * |********|********|********|**********|
+     * 
+     *  ** Send **
+     * 
+     * |************ Book ************|
+     * |* abcdefghijklmnopqrstuvwxyz *|
+     * |******************************|
      */
     public void joinFile(DatagramPacket petition, List<String> fragmentsFile){
         //System.out.println("\njoinFile\n");
         String fullFile = "";
-        for (String element : fragmentsFile) {
-            fullFile += element;
+        if(this.numberDamagedDiscs <= 1){
+            for (String element : fragmentsFile) {
+                fullFile += element;
+            }
+        }else{
+            fullFile = "** More than 1 damaged disk **";
         }
         System.out.println(fullFile);
         send(petition, fullFile);
@@ -323,44 +381,8 @@ public class Server extends Thread{
     
     public String getSplitFile(List<String> fragmentsBook){
         
-        /**
-         * File archivo = new File("file.txt");
-         * if (!archivo.exists()) {
-         *     System.out.println("OJO: ¡¡No existe el archivo de configuración!!");
-         * }
-         * 
-         * **GetBook**
-         * 
-         *  All discs without problem
-         * 
-         * |*Disk_0*|*Disk_1*|*Disk_2*|**Disk_3**|
-         * |********|********|********|**********|
-         * | abcdef | ghijkl | mnopqr | stuvwxyz |
-         * |********|********|********|**********|
-         * 
-         * |************ Book ************|
-         * |* abcdefghijklmnopqrstuvwxyz *|
-         * |******************************|
-         * 
-         *  A damaged disk
-         * 
-         * |*Disk_0*|*Disk_1*|*Disk_2*|**Disk_3**|
-         * |********|********|********|**********|
-         * | abcdef | XXXXXX | mnopqr | stuvwxyz |
-         * |********|********|********|**********|
-         * 
-         * |************ Book ************|
-         * |* abcdefXXXXXXmnopqrstuvwxyz *|
-         * |******************************|
-         * 
-         * |*********Disk_4**Patity**(byte)******|
-         * |********|********|********|**********|
-         * | abcdef | ghijkl | mnopqr | stuvwxyz |
-         * |*************************************|
-         * 
-         * |************ Book ************|
-         * |* abcdefghijklmnopqrstuvwxyz *|
-         * |******************************|
+        /**     
+         *         
          * 
          */
         

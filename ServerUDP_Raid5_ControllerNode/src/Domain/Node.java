@@ -23,6 +23,7 @@ public class Node extends Thread{
     private boolean writeData;
     private boolean readData;
     private boolean ready;
+    private boolean damaged;
     
     private String name="";
     private String content="";
@@ -36,6 +37,7 @@ public class Node extends Thread{
         this.writeData = false;
         this.readData = false;
         this.ready = false;
+        this.damaged = false;
     }
 
     @Override
@@ -75,11 +77,26 @@ public class Node extends Thread{
         this.readData = true;
     }
     
+    /**
+     * @param name : Name fragment file
+     * @return Fragment file
+     * 
+     * Check if the file exists
+     * If it exists, it returns
+     * else return file not found
+     */
     private String read(String name){
         String contents = "";
         FileReader fr = null;
+        File folder = new File(path);
+        File fileContent = new File(path+"\\"+name+".txt");
+        if (!folder.exists() || !fileContent.exists()) {
+            this.damaged = true;
+            ready(); 
+            return "ErrorFileNotFoundError";          
+        }
         try {
-            fr = new FileReader(new File(path+"\\"+name+".txt"));
+            fr = new FileReader(fileContent);
             BufferedReader br = new BufferedReader(fr);
 
             String linea;
@@ -87,9 +104,7 @@ public class Node extends Thread{
                 contents += linea;
             }
         }catch(IOException e){
-            System.out.println("Node.read(): "+e.getMessage());
-            ready();
-            return "FileNotFound";
+            System.out.println("Node.read(): "+e.getMessage());          
         }finally{
             try{                    
                 if( null != fr ){   
@@ -103,6 +118,12 @@ public class Node extends Thread{
         return contents;
     }
     
+    /**
+     * @param name : File name
+     * @param content : File content
+     * 
+     * Save the file fragment
+     */
     public void save(String name, String content){
         FileWriter fw = null;
         try {
@@ -130,11 +151,17 @@ public class Node extends Thread{
         
     }
     
+    /**
+     * Notifies that the node is ready to be read
+     */
     private void ready(){
         //System.out.println("ready");
         this.ready = true;
     }
 
+    /**
+     * @return : File fragment content
+     */
     public String getContent() {
         //System.out.println("\ngetContent"+this.id);
         this.ready = false;
@@ -152,5 +179,8 @@ public class Node extends Thread{
     public int getIdentification() {
         return id;
     }
-    
+
+    public boolean isDamaged() {
+        return damaged;
+    } 
 }
