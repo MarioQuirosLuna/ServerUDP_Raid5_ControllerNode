@@ -20,23 +20,37 @@ import java.util.logging.Logger;
  * @author mario
  */
 public class Server extends Thread{
-    
     /**
      * PORT: Server port
-     * buffer: Buffer por data
-     * socketUDP: Socket
-     * message: Data transformed into string
-     * listMetadata: List of books with data required for reconstruction
-     * listNodes: List of nodes representing physical disks
-     * numberDisk: Number of discs in the raid
      */
     public final int PORT;
+    /**
+     * buffer: Buffer por data
+     */
     private byte[] buffer;
+    /**
+     * socketUDP: Socket
+     */
     private DatagramSocket socketUDP;
+    /**
+     * message: Data transformed into string
+     */
     private String message;
+    /**
+     * listMetadata: List of books with data required for reconstruction
+     */
     private final List<MetaData> listMetadata;
+    /**
+     * listNodes: List of nodes representing physical disks
+     */
     private final List<Node> listNodes;
+    /**
+     * numberDisk: Number of discs in the raid
+     */
     private final int numberDisk;
+    /**
+     * numberDisk: Number of damaged discs in the raid
+     */
     private int numberDamagedDiscs;
  
     /**
@@ -99,14 +113,15 @@ public class Server extends Thread{
     }
     
     /**
-     * name : Name of the file received from the client
-     * size : Size of the file received from the client
-     * content : Content of the file received from the client
      * 
      * Receive file from client
      */
     public void receiveFile(){
-
+        /**
+         * name : Name of the file received from the client
+         * size : Size of the file received from the client
+         * content : Content of the file received from the client
+         */
         String nameFile = receive();
         int sizeFile = Integer.parseInt(receive());
         String content = receive(sizeFile);
@@ -117,11 +132,12 @@ public class Server extends Thread{
     }
     
     /**
-     * @param petition : Client request with which you will be answered
-     * 
      * Receive request to obtain the names
      * Submit the number of names
      * Submit the names
+     * 
+     * @param petition : Client request with which you will be answered
+     * 
      */
     public void receiveGetNames(DatagramPacket petition){
         send(petition, String.valueOf(this.listMetadata.size()));
@@ -131,6 +147,11 @@ public class Server extends Thread{
         //System.out.println("Submitted names");
     }
     
+    /**
+     * Find which names match those of the request
+     * @param petition Returns the matching names
+     * 
+     */
     public void receiveSearchName(DatagramPacket petition){
         String name = receive();
         List<String> names = new ArrayList<>();
@@ -146,29 +167,8 @@ public class Server extends Thread{
         }
     }
     /**
-     * 
      * Get the file name
-     * 
-     * Look for the MetaData that corresponds to the file with that name
-     * 
-     * |*******Metadata********|  |***********Fragment************|  |************Data***********|
-     * | id | name | fragments |  | position | disk | name | data |  | position | name | content |
-     * |***********************|  |*******************************|  |***************************|
-     * 
-     *  ** A damaged disk **
-     * 
-     * |*Disk_0*|*Disk_1*|*Disk_2*|**Disk_3**|
-     * |********|********|********|**********|
-     * | abcdef | XXXXXX | mnopqr | stuvwxyz |
-     * |********|********|********|**********|
-     * 
-     *  ** Damaged book **
-     * 
-     * |************ Book ************|
-     * |* abcdefXXXXXXmnopqrstuvwxyz *|
-     * |******************************|
-     * 
-     * 
+     * Find the MetaData that corresponds to the file with that name
      * @return Fragments file
      * 
      */
@@ -206,21 +206,10 @@ public class Server extends Thread{
         return fragmentsFile;
     }
     /**
+     * If a disk is damaged use the parity simulation to rebuild it
      * @param metadata : File Metadata
      * @return Rebuild file
      * 
-     *  ** Parity simulation is used **
-     * 
-     * |*********Disk_4**Patity**(byte)******|
-     * |********|********|********|**********|
-     * | abcdef | ghijkl | mnopqr | stuvwxyz |
-     * |*************************************|
-     * 
-     *  ** Rebuild the book **
-     * 
-     * |************ Book ************|
-     * |* abcdefghijklmnopqrstuvwxyz *|
-     * |******************************|
      */
     public List<String> fragmentReconstructionRaid5(MetaData metadata){
         List<String> fragmentsFile = new ArrayList<>();
@@ -234,23 +223,10 @@ public class Server extends Thread{
     }
     
     /**
+     * All disks without problem then returns the file fragments
      * @param petition : Client request with which you will be answered
-     * @param fragmentsFile 
+     * @param fragmentsFile : file fragments
      * 
-     *  **GetBook**
-     * 
-     *  All discs without problem
-     * 
-     * |*Disk_0*|*Disk_1*|*Disk_2*|**Disk_3**|
-     * |********|********|********|**********|
-     * | abcdef | ghijkl | mnopqr | stuvwxyz |
-     * |********|********|********|**********|
-     * 
-     *  ** Send **
-     * 
-     * |************ Book ************|
-     * |* abcdefghijklmnopqrstuvwxyz *|
-     * |******************************|
      */
     public void joinFile(DatagramPacket petition, List<String> fragmentsFile){
         //System.out.println("\njoinFile\n");
@@ -267,10 +243,10 @@ public class Server extends Thread{
     }
     
     /**
+     * Look for the file MetaData with the requested name 
      * @param name : File name
      * @return Metadata : Metadata with the data of the searched file
      * 
-     * Look for the file MetaData with the requested name
      */
     private MetaData searchMetaData(String name){
         
@@ -285,21 +261,11 @@ public class Server extends Thread{
     }
     
     /**
+     * Receive the content of the book
+     * Separate the book into pieces, with the respective node(Disk) where it will be saved 
      * @param name : Name of file
      * @param file : Content of file
      * @return MetaData : Data of book
-     * 
-     * Receive the content of the book
-     * file: abcdefghijklmnopqrstuvwxyz
-     * 
-     * Separate the book into pieces, with the respective node(Disk) where it will be saved
-     * 
-     * |*Disk_0*|*Disk_1*|*Disk_2*|**Disk_3**|***Disk_4**Patity**(byte)***|
-     * |********|********|********|**********|****************************|
-     * | abcdef | ghijkl | mnopqr | stuvwxyz | abcdefghijklmnopqrstuvwxyz |
-     * |********|********|********|**********|****************************|
-     * 
-     *  
      */
     public MetaData splitFile(String name, String file){
 
@@ -330,19 +296,13 @@ public class Server extends Thread{
     }
     /**
      * Receive a MetaData object
-     * @param metadata 
-     * 
      * Save the respective fragments of the book in each corresponding node, with the name and the content
-     * 
+     * @param metadata 
      */
     public void saveSplitFile(MetaData metadata){
-        //System.out.println("saveSplitFile");
         this.listMetadata.add(metadata);       
         
         for (int i = 0; i < this.listNodes.size(); i++) {
-            //System.out.println("Nodo: "+metadata.getFragments().get(i).getDisk());
-            //System.out.println("Name: "+metadata.getFragments().get(i).getData().getName());
-            //System.out.println("Content: "+metadata.getFragments().get(i).getData().getContent());
             this.listNodes.get(metadata.getFragments().get(i).getDisk()).modeWrite(
                     metadata.getFragments().get(i).getData().getName(),
                     metadata.getFragments().get(i).getData().getContent()
@@ -379,16 +339,6 @@ public class Server extends Thread{
         return array;
     }
     
-    public String getSplitFile(List<String> fragmentsBook){
-        
-        /**     
-         *         
-         * 
-         */
-        
-        return null;
-    }
-    
     /**
      * Method that listens to the clients
      * @return String with client data
@@ -409,10 +359,9 @@ public class Server extends Thread{
     }
     
     /**
+     * Method that listen to the clients, but with a dynamic size buffer
      * @param size : File size
      * @return String with client data book
-     * 
-     * Method that listen to the clients, but with a dynamic size buffer
      */
     public String receive(int size){
         buffer = new byte[size];
@@ -430,6 +379,7 @@ public class Server extends Thread{
     }
     
     /**
+     * Respond to the customer
      * @param petition : Clients petition
      * @param send : Message for send
      */
@@ -451,9 +401,9 @@ public class Server extends Thread{
     }
     
     /**
-     * @param numberDisk : Number of discs in the raid
      * Create and add nodes to list
      * Initialize the nodes(Disk)
+     * @param numberDisk : Number of discs in the raid
      */
     public void createNodes(int numberDisk){       
       

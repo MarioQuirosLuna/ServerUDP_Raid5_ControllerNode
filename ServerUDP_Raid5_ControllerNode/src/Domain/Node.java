@@ -3,11 +3,9 @@ package Domain;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,20 +38,19 @@ public class Node extends Thread{
         this.damaged = false;
     }
 
+    /**
+     * Start node
+     */
     @Override
     public void run() {
         while(this.state){
             try {
                 if(this.writeData){
-                    //System.out.println("Saving in node: "+this.id);
                     save(this.name, this.content);
-                    //System.out.println("Saved by node: "+this.id);
                     this.writeData = false;
                 }
                 if(this.readData){
-                    //System.out.println("Getting from node: "+this.id);
                     this.content = read(this.name);
-                    //System.out.println("Obtained by node: "+this.id);
                     this.readData = false;
                 }
                 
@@ -64,15 +61,24 @@ public class Node extends Thread{
         }
     }
     
+    /**
+     * @param name
+     * @param content 
+     * 
+     * Activate writing mode
+     */
     public void modeWrite(String name, String content){
-        //System.out.println("modeWrite node: "+this.id);
         this.name = name;
         this.content = content;
         this.writeData = true;
     }
     
+    /**
+     * @param name 
+     * 
+     * Activate reading mode
+     */
     public void modeRead(String name){  
-        //System.out.println("modeRead node: "+this.id);
         this.name = name;
         this.readData = true;
     }
@@ -155,7 +161,6 @@ public class Node extends Thread{
      * Notifies that the node is ready to be read
      */
     private void ready(){
-        //System.out.println("ready");
         this.ready = true;
     }
 
@@ -163,7 +168,6 @@ public class Node extends Thread{
      * @return : File fragment content
      */
     public String getContent() {
-        //System.out.println("\ngetContent"+this.id);
         this.ready = false;
         return content;
     }
@@ -180,6 +184,9 @@ public class Node extends Thread{
         return id;
     }
 
+    /**
+     * @return Notify if the disk is damaged
+     */
     public boolean isDamaged() {
         return damaged;
     } 
