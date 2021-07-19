@@ -28,3 +28,6 @@ Client: https://github.com/MarioQuirosLuna/ClientUDP_Raid5
 Unzip the files.
 
 Open the projects in the IDE.
+
+Class diagram:
+![Class diagram](https://user-images.githubusercontent.com/37676736/126219807-ea614f4b-9bda-41d2-b9f1-17abaa88b28b.png)
