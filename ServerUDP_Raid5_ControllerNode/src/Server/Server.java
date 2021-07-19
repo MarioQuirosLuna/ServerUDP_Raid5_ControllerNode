@@ -175,12 +175,17 @@ public class Server extends Thread{
         }
         
         List<String> fragmentsFile = new ArrayList<>();
-        
+
         for (int i = 0; i < metadata.getFragments().size(); i++) {
             //System.out.println("\nFor2: "+i);
-            while(!this.listNodes.get(metadata.getFragments().get(i).getDisk()).isReady()){System.out.print("");} //while == false
+            while(!this.listNodes.get(metadata.getFragments().get(i).getDisk()).isReady()){System.out.print("");} //while notReady
             if(!metadata.getFragments().get(i).getData().isParity()){
-                fragmentsFile.add(this.listNodes.get(metadata.getFragments().get(i).getDisk()).getContent());
+                String content = this.listNodes.get(metadata.getFragments().get(i).getDisk()).getContent();
+                if(content.equals("FileNotFound")){
+                    fragmentsFile.add("XXXXXXX");
+                }else{
+                    fragmentsFile.add(content);
+                }
             }else{
                 this.listNodes.get(metadata.getFragments().get(i).getDisk()).setReady(false);
             }

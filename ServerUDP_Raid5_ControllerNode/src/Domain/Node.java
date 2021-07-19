@@ -1,8 +1,10 @@
 package Domain;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
@@ -75,30 +77,34 @@ public class Node extends Thread{
     
     private String read(String name){
         String contents = "";
+        FileReader fr = null;
         try {
-            File fileContent = new File(path+"\\"+name+".txt");
-            
-            Scanner s = new Scanner(fileContent);
+            fr = new FileReader(new File(path+"\\"+name+".txt"));
+            BufferedReader br = new BufferedReader(fr);
 
-            /*
-            Read line to line the file
-            */
-            while (s.hasNextLine()) {
-                String line = s.nextLine();
-                /*
-                Save the line in the contents.
-                */
-                contents += line; 
+            String linea;
+            while((linea=br.readLine())!=null){
+                contents += linea;
             }
-            //System.out.println(contents);
+        }catch(IOException e){
+            System.out.println("Node.read(): "+e.getMessage());
             ready();
-        } catch (FileNotFoundException e) {
-            System.out.println("Node.read() "+e.getMessage());
+            return "FileNotFound";
+        }finally{
+            try{                    
+                if( null != fr ){   
+                    fr.close();     
+                }                  
+            }catch (IOException e2){ 
+                System.out.println("Node.read(): "+e2.getMessage());
+            }
         }
+        ready();
         return contents;
     }
     
     public void save(String name, String content){
+        FileWriter fw = null;
         try {
             File fileContent = new File(path+"\\"+name+".txt");
         
@@ -106,12 +112,20 @@ public class Node extends Thread{
                 fileContent.createNewFile();
             }
             
-            FileWriter fw = new FileWriter(fileContent);
+            fw = new FileWriter(fileContent);
             try (BufferedWriter bw = new BufferedWriter(fw)) {
                 bw.write(content);
             }
         } catch (IOException e) {
             System.err.println("Node.Save() "+e.getMessage());
+        }finally{
+            try{                    
+                if( null != fw ){   
+                    fw.close();     
+                }                  
+            }catch (IOException e2){ 
+                System.out.println("Node.Save(): "+e2.getMessage());
+            }
         }
         
     }
