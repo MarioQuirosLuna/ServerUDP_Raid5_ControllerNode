@@ -156,7 +156,7 @@ public class Server extends Thread{
         String name = receive();
         List<String> names = new ArrayList<>();
         for (int i = 0; i < this.listMetadata.size(); i++) {
-            if(this.listMetadata.get(i).getName().contains(name)){
+            if(this.listMetadata.get(i).getName().toUpperCase().contains(name.toUpperCase())){
                 names.add(this.listMetadata.get(i).getName());
             }
         }
